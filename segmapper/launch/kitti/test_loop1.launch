@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+  
+  <param name="/use_sim_time" value="true" />     <!-- 跑自带示例时不需要 -->
+  <arg name="respawn_value" default="false" /> <!-- boolean: true, false -->
+  
+  <!-- Bag file path -->  
+<!-- <arg name="bag_file" value="$(env HOME)/data/segmap/kitti/2011_10_03_drive_27.bag"/>  -->
+<!--  <arg name="bag_file" value="/home/zmy/data/bag/outdoor/sub_hw.bag"/>  -->
+<!-- <arg name="bag_file" value="/home/zmy/data/bag/outdoor/2018-08-20_HW_laser_odom_imu_clock.bag"/>  -->
+<!--  <arg name="bag_file" value="$(env HOME)/data/segmap/kitti/sub.bag"/> -->
+<!-- <arg name="bag_file" value="/home/zmy/data/bag/outdoor/2018-11-03-14-51-01.bag"/> -->
+<arg name="bag_file" value="/home/zmy/data1/bag/2019-04-26-14-06-58.bag"/>
+  <rosparam param="LaserMapper/bag_file" subst_value="True">$(arg bag_file)</rosparam>
+
+  <!-- Rviz visualization config file path -->
+  <arg name="rviz_config_file" value="$(env HOME)/data/segmap/kitti/kitti_loop_closure.rviz"/>
+
+  <!-- ROS parameters -->
+  <rosparam>use_sim_time: true</rosparam>
+
+  <rosparam command="load" file="$(find segmapper)/launch/kitti/kitti_loop_closure.yaml"/>
+  
+
+  <!-- rviz node -->
+<!--  <node name="visualizer" pkg="rviz" type="rviz" output="screen" respawn="$(arg respawn_value)" args="-d $(arg rviz_config_file)" />   -->
+  
+  <!-- rosbag player node -->
+<!--   注意 clock 选项的添加可能会使程序死掉   -->  
+ <node name="player" pkg="rosbag" type="play" output="screen" args=" -r 2 -s 0 --clock --pause $(arg bag_file)"> 
+  <!-- <node name="player" pkg="rosbag" type="play" output="screen" args=" -r 1 -s 0 - -pause $(arg bag_file)"> -->
+    <remap from="points_raw" to="velodyne_points"/>
+  </node>
+
+    <!-- segmapper node -->
+  <include file="$(find segmapper)/launch/segmapper.launch">
+    <arg name="icp_configuration_file" value="$(find segmapper)/launch/kitti/icp_dynamic_outdoor.yaml"/>
+    <arg name="icp_input_filters_file" value="$(find segmapper)/launch/kitti/input_filters_outdoor.yaml"/>
+    <!--  <remap from="points_raw" to="velodyne_points"/>  -->
+   
+  </include>
+  <node name="segmap_tf_bag" pkg="mr_nice" type="segmap_tf_bag" >
+  <!--  <remap from="odom_pose" to="pose_imu"/> -->
+  </node>   
+	
+</launch>
